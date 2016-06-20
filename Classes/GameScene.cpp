@@ -72,12 +72,21 @@ void GameWorld::shapeGenerator(float dt)
     
     rotationPoint->addChild(shape);
     
-    Vec2 destination = getEndLocation();
-    auto rotationPointAction = MoveTo::create(2, destination);
-    rotationPoint->runAction(rotationPointAction);
+    WallInfo wall = getInitialEndLocation();
+    auto rotationPointAction = MoveTo::create(2, wall.positionOnWall);
+    Shape entry;
+    entry.rotationPoint = rotationPoint;
+    entry.shape = shape;
+    entry.shapeType = entry.shape->getTag();
+    entry.timeDelay = 0;
+    entry.initPosition = Vec2(screenCentreX,screenCentreY);
+    entry.wall = wall;
+    shapeList.push_back(entry);
+    
+    rotationPoint->runAction(Sequence::create(rotationPointAction,CallFunc::create(CC_CALLBACK_0(GameWorld::wallHit,this,rotationPoint,entry)),NULL));
     
     this->addChild(rotationPoint,1);
-
+    
   //  int direction =random(0,DIRECTION_COUNT-1);
     
    /* auto rotationPointMoveAction =  RepeatForever::create(
@@ -90,14 +99,7 @@ void GameWorld::shapeGenerator(float dt)
     
     
    
-    Shape entry;
-    entry.rotationPoint = rotationPoint;
-    entry.shape = shape;
-    entry.shapeType = entry.shape->getTag();
-    entry.timeDelay = 0;
-    entry.initPosition = Vec2(screenCentreX,screenCentreY);
-    entry.finalPosition = destination;
-    shapeList.push_back(entry);
+    
     
     
    // shapeList.insert(0, entry);
@@ -199,27 +201,236 @@ void GameWorld::update(float dt)
    
 }
 
-cocos2d::Vec2 GameWorld::getEndLocation()
+GameWorld::WallInfo GameWorld::getInitialEndLocation()
 {
     int chosenWall =random(TOP_WALL, RIGHT_WALL);
+    WallInfo wall;
     if(chosenWall == TOP_WALL)
     {
+        wall.wallType = TOP_WALL;
         int position = random(origin.x +WALL_WIDTH+CIRCLE_MARGIN,screenEndX - WALL_WIDTH - CIRCLE_MARGIN);
-        return Vec2(position,screenEndY-WALL_WIDTH-CIRCLE_MARGIN);
+        wall.positionOnWall =  Vec2(position,screenEndY-WALL_WIDTH-CIRCLE_MARGIN);
     }
     else if(chosenWall == BOTTOM_WALL)
     {
+        wall.wallType = BOTTOM_WALL;
         int position = random(origin.x +WALL_WIDTH+CIRCLE_MARGIN,screenEndX - WALL_WIDTH - CIRCLE_MARGIN);
-        return Vec2(position,origin.y+WALL_WIDTH+CIRCLE_MARGIN);
+        wall.positionOnWall =  Vec2(position,origin.y+WALL_WIDTH+CIRCLE_MARGIN);
     }
     else if(chosenWall == LEFT_WALL)
     {
+        wall.wallType = LEFT_WALL;
         int position = random(origin.y +WALL_WIDTH+CIRCLE_MARGIN,screenEndY- WALL_WIDTH - CIRCLE_MARGIN);
-        return Vec2(origin.x+WALL_WIDTH+CIRCLE_MARGIN,position);
+        wall.positionOnWall =  Vec2(origin.x+WALL_WIDTH+CIRCLE_MARGIN,position);
     }
     else
     {
+        wall.wallType = RIGHT_WALL;
         int position = random(origin.y +WALL_WIDTH+CIRCLE_MARGIN,screenEndY- WALL_WIDTH - CIRCLE_MARGIN);
-        return Vec2(screenEndX-WALL_WIDTH-CIRCLE_MARGIN,position);
+        wall.positionOnWall =  Vec2(screenEndX-WALL_WIDTH-CIRCLE_MARGIN,position);
     }
+    
+    return wall;
+}
+
+void GameWorld::wallHit(Node *point,Shape shape)
+{
+    
+    float x1 = shape.initPosition.x;
+    float y1 = shape.initPosition.y;
+    float x2 = shape.wall.positionOnWall.x;
+    float y2 = shape.wall.positionOnWall.y;
+    float theta = atan((y2 - y1)/(x2 - x1));
+    float slope = tan(M_PI-theta);
+    
+    shape.initPosition = shape.wall.positionOnWall;
+    
+    if(shape.wall.wallType == TOP_WALL)
+    {
+        if(x2 > x1 && y2 > y1)
+        {
+            Vec2 rightWallPoint = getRightWallCoords(x2, y2, slope);
+            if(isPointOnRightWall(rightWallPoint))
+            {
+                shape.wall.positionOnWall = rightWallPoint;
+                shape.wall.wallType = RIGHT_WALL;
+            }
+            else
+            {
+                Vec2 bottomWallPoint = getBottomWallCoords(x2, y2, slope);
+                shape.wall.positionOnWall = bottomWallPoint;
+                shape.wall.wallType = BOTTOM_WALL;
+            }
+        }
+        else if(x2 < x1 && y2>y1)
+        {
+            Vec2 leftWallPoint = getLeftWallCoords(x2, y2, slope);
+            if(isPointOnLeftWall(leftWallPoint))
+            {
+                shape.wall.positionOnWall = leftWallPoint;
+                shape.wall.wallType = LEFT_WALL;
+            }
+            else
+            {
+                Vec2 bottomWallPoint = getBottomWallCoords(x2, y2, slope);
+                shape.wall.positionOnWall = bottomWallPoint;
+                shape.wall.wallType = BOTTOM_WALL;
+            }
+        }
+    }
+    else if(shape.wall.wallType == BOTTOM_WALL)
+    {
+        if (x2 > x1 && y2 < y1)
+        {
+            Vec2 rightWallPoint = getRightWallCoords(x2, y2, slope);
+            if(isPointOnRightWall(rightWallPoint))
+            {
+                shape.wall.positionOnWall = rightWallPoint;
+                shape.wall.wallType = RIGHT_WALL;
+            }
+            else
+            {
+                Vec2 topWallPoint = getTopWallCoords(x2, y2, slope);
+                shape.wall.positionOnWall = topWallPoint;
+                shape.wall.wallType = TOP_WALL;
+            }
+        }
+        else if (x2 < x1 && y2 < y1)
+        {
+            Vec2 leftWallPoint = getLeftWallCoords(x2, y2, slope);
+            if(isPointOnLeftWall(leftWallPoint))
+            {
+                shape.wall.positionOnWall = leftWallPoint;
+                shape.wall.wallType = LEFT_WALL;
+            }
+            else
+            {
+                Vec2 topWallPoint = getTopWallCoords(x2, y2, slope);
+                shape.wall.positionOnWall = topWallPoint;
+                shape.wall.wallType = TOP_WALL;
+            }
+        }
+    }
+    else if(shape.wall.wallType == LEFT_WALL)
+    {
+        if(x2<x1 && y2>y1)
+        {
+            Vec2 rightWallPoint = getRightWallCoords(x2, y2, slope);
+            if(isPointOnRightWall(rightWallPoint))
+            {
+                shape.wall.positionOnWall = rightWallPoint;
+                shape.wall.wallType = RIGHT_WALL;
+            }
+            else
+            {
+                Vec2 topWallPoint = getTopWallCoords(x2, y2, slope);
+                shape.wall.positionOnWall = topWallPoint;
+                shape.wall.wallType = TOP_WALL;
+            }
+        }
+        else if (x2<x1 && y2 < y1)
+        {
+            Vec2 rightWallPoint = getRightWallCoords(x2, y2, slope);
+            if(isPointOnRightWall(rightWallPoint))
+            {
+                shape.wall.positionOnWall = rightWallPoint;
+                shape.wall.wallType = RIGHT_WALL;
+            }
+            else
+            {
+                Vec2 bottomWallPoint = getBottomWallCoords(x2, y2, slope);
+                shape.wall.positionOnWall = bottomWallPoint;
+                shape.wall.wallType = BOTTOM_WALL;
+            }
+        }
+    }
+    else if(shape.wall.wallType == RIGHT_WALL)
+    {
+        if(x2>x1 && y2>y1)
+        {
+            Vec2 leftWallPoint = getLeftWallCoords(x2, y2, slope);
+            if(isPointOnLeftWall(leftWallPoint))
+            {
+                shape.wall.positionOnWall = leftWallPoint;
+                shape.wall.wallType = LEFT_WALL;
+            }
+            else
+            {
+                Vec2 topWallPoint = getTopWallCoords(x2, y2, slope);
+                shape.wall.positionOnWall = topWallPoint;
+                shape.wall.wallType = TOP_WALL;
+            }
+        }
+        else if(x2>x1 && y2<y1)
+        {
+            Vec2 leftWallPoint = getLeftWallCoords(x2, y2, slope);
+            if(isPointOnLeftWall(leftWallPoint))
+            {
+                shape.wall.positionOnWall = leftWallPoint;
+                shape.wall.wallType = LEFT_WALL;
+            }
+            else
+            {
+                Vec2 bottomWallPoint = getBottomWallCoords(x2, y2, slope);
+                shape.wall.positionOnWall = bottomWallPoint;
+                shape.wall.wallType = BOTTOM_WALL;
+            }
+        }
+    }
+}
+
+cocos2d::Vec2 GameWorld::getTopWallCoords(float x1, float y1, float slope)
+{
+    float x2 = (screenEndY - WALL_WIDTH - CIRCLE_MARGIN - y1)/slope + x1;
+    return Vec2(x2,screenEndY - WALL_WIDTH - CIRCLE_MARGIN);
+}
+
+cocos2d::Vec2 GameWorld::getBottomWallCoords(float x1, float y1, float slope)
+{
+    float x2 = (origin.y + WALL_WIDTH + CIRCLE_MARGIN - y1)/slope + x1;
+    return Vec2(x2,origin.y + WALL_WIDTH + CIRCLE_MARGIN);
+}
+
+cocos2d::Vec2 GameWorld::getLeftWallCoords(float x1, float y1, float slope)
+{
+    float y2 = slope * (origin.x+WALL_WIDTH+CIRCLE_MARGIN - x1) + y1;
+    return Vec2(origin.x+WALL_WIDTH+CIRCLE_MARGIN,y2);
+}
+
+cocos2d::Vec2 GameWorld::getRightWallCoords(float x1, float y1, float slope)
+{
+    float y2 = slope * (screenEndX - WALL_WIDTH - CIRCLE_MARGIN - x1) + y1;
+    return Vec2(screenEndX - WALL_WIDTH - CIRCLE_MARGIN,y2);
+}
+
+bool GameWorld::isPointOnTopWall(cocos2d::Vec2 point)
+{
+    if((point.y == screenEndY - WALL_WIDTH - CIRCLE_MARGIN) && ((point.x < origin.x + WALL_WIDTH + CIRCLE_MARGIN) && (point.x > screenEndX - WALL_WIDTH - CIRCLE_MARGIN)))
+            return true;
+        else
+            return false;
+}
+
+bool GameWorld::isPointOnBottomWall(cocos2d::Vec2 point)
+{
+    if((point.y == origin.y + WALL_WIDTH + CIRCLE_MARGIN) && ((point.x < origin.x + WALL_WIDTH + CIRCLE_MARGIN) && (point.x > screenEndX - WALL_WIDTH - CIRCLE_MARGIN)))
+        return true;
+    else
+        return false;
+}
+
+bool GameWorld::isPointOnLeftWall(cocos2d::Vec2 point)
+{
+    if((point.x == origin.x + WALL_WIDTH + CIRCLE_MARGIN) && ((point.y < origin.y + WALL_WIDTH + CIRCLE_MARGIN) && (point.y > screenEndY - WALL_WIDTH - CIRCLE_MARGIN)))
+        return true;
+    else
+        return false;
+}
+
+bool GameWorld::isPointOnRightWall(cocos2d::Vec2 point)
+{
+    if((point.x == screenEndX - WALL_WIDTH - CIRCLE_MARGIN) && ((point.y < origin.y + WALL_WIDTH + CIRCLE_MARGIN) && (point.y > screenEndY - WALL_WIDTH - CIRCLE_MARGIN)))
+        return true;
+    else
+        return false;
 }
