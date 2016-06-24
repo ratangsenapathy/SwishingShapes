@@ -39,10 +39,12 @@ bool GameWorld::init()
     playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F(247.0/255.0,196.0/255.0,81/255.0, 1));
   
     this->addChild(playField);
-    
-    generationTime =0.5f;
+    currentShapePoint = Node::create();
+    currentShapePoint->setPosition(Vec2(screenEndX - (WALL_WIDTH),screenEndY - (WALL_WIDTH/2.0)));
+    this->addChild(currentShapePoint);
+    generationTime =1.0f;
     this->schedule(schedule_selector(GameWorld::shapeGenerator), generationTime);
-    
+    this->schedule(schedule_selector(GameWorld::currentShapeChooser),generationTime*4.0f);
   //  this->scheduleUpdate();
    
     return true;
@@ -65,7 +67,7 @@ void GameWorld::shapeGenerator(float dt)
     rotationPoint->setPosition(screenCentreX,screenCentreY);
     
     
-    auto shape =getShape();
+    auto shape = getShape();
     auto rotateShapeAction = RepeatForever::create(RotateBy::create(1.0f, 180));
     shape->runAction(rotateShapeAction);
     
@@ -103,6 +105,15 @@ void GameWorld::shapeGenerator(float dt)
     
     
    // shapeList.insert(0, entry);
+}
+
+void GameWorld::currentShapeChooser(float dt)
+{
+    auto currentShape = getShape();
+    currentShape->setScale((CIRCLE_MARGIN)/((float)WALL_WIDTH)/1.5f);
+    currentShapePoint->removeAllChildren();
+    currentShapePoint->addChild(currentShape);
+    
 }
 
 DrawNode* GameWorld::getShape()
@@ -205,6 +216,11 @@ GameWorld::WallInfo GameWorld::getInitialEndLocation()
 {
     int chosenWall =random(TOP_WALL, RIGHT_WALL);
     WallInfo wall;
+    
+    /*wall.wallType = RIGHT_WALL;
+    int position = random(origin.y +WALL_WIDTH+CIRCLE_MARGIN,screenEndY- WALL_WIDTH - CIRCLE_MARGIN);
+    wall.positionOnWall =  Vec2(screenEndX-WALL_WIDTH-CIRCLE_MARGIN,position);
+    return wall;*/
     if(chosenWall == TOP_WALL)
     {
         wall.wallType = TOP_WALL;
@@ -377,6 +393,8 @@ void GameWorld::wallHit(Node *point,Shape shape)
             }
         }
     }
+    
+    shape.rotationPoint->runAction(Sequence::create(MoveTo::create(2,shape.wall.positionOnWall),CallFunc::create(CC_CALLBACK_0(GameWorld::wallHit,this,point,shape)),NULL));
 }
 
 cocos2d::Vec2 GameWorld::getTopWallCoords(float x1, float y1, float slope)
@@ -405,7 +423,7 @@ cocos2d::Vec2 GameWorld::getRightWallCoords(float x1, float y1, float slope)
 
 bool GameWorld::isPointOnTopWall(cocos2d::Vec2 point)
 {
-    if((point.y == screenEndY - WALL_WIDTH - CIRCLE_MARGIN) && ((point.x < origin.x + WALL_WIDTH + CIRCLE_MARGIN) && (point.x > screenEndX - WALL_WIDTH - CIRCLE_MARGIN)))
+    if(((int)point.y == (int)(screenEndY - WALL_WIDTH - CIRCLE_MARGIN)) && (((int)point.x > ((int)origin.x + WALL_WIDTH + CIRCLE_MARGIN)) && ((int)point.x < ((int)screenEndX - WALL_WIDTH - CIRCLE_MARGIN))))
             return true;
         else
             return false;
@@ -413,7 +431,7 @@ bool GameWorld::isPointOnTopWall(cocos2d::Vec2 point)
 
 bool GameWorld::isPointOnBottomWall(cocos2d::Vec2 point)
 {
-    if((point.y == origin.y + WALL_WIDTH + CIRCLE_MARGIN) && ((point.x < origin.x + WALL_WIDTH + CIRCLE_MARGIN) && (point.x > screenEndX - WALL_WIDTH - CIRCLE_MARGIN)))
+    if((int)(point.y == (int)(origin.y + WALL_WIDTH + CIRCLE_MARGIN)) && (((int)point.x > ((int)origin.x + WALL_WIDTH + CIRCLE_MARGIN)) && ((int)point.x < ((int)screenEndX - WALL_WIDTH - CIRCLE_MARGIN))))
         return true;
     else
         return false;
@@ -421,15 +439,19 @@ bool GameWorld::isPointOnBottomWall(cocos2d::Vec2 point)
 
 bool GameWorld::isPointOnLeftWall(cocos2d::Vec2 point)
 {
-    if((point.x == origin.x + WALL_WIDTH + CIRCLE_MARGIN) && ((point.y < origin.y + WALL_WIDTH + CIRCLE_MARGIN) && (point.y > screenEndY - WALL_WIDTH - CIRCLE_MARGIN)))
+    if((int)point.x == (int)(origin.x + WALL_WIDTH + CIRCLE_MARGIN))
+    { if(((int)point.y > (int)(origin.y + WALL_WIDTH + CIRCLE_MARGIN)) && ((int)point.y <(int)(screenEndY - WALL_WIDTH - CIRCLE_MARGIN)))
         return true;
+        else
+        return false;
+    }
     else
         return false;
 }
 
 bool GameWorld::isPointOnRightWall(cocos2d::Vec2 point)
 {
-    if((point.x == screenEndX - WALL_WIDTH - CIRCLE_MARGIN) && ((point.y < origin.y + WALL_WIDTH + CIRCLE_MARGIN) && (point.y > screenEndY - WALL_WIDTH - CIRCLE_MARGIN)))
+    if(((int)point.x == (int)(screenEndX - WALL_WIDTH - CIRCLE_MARGIN)) && (((int)point.y > (int)(origin.y + WALL_WIDTH + CIRCLE_MARGIN)) && ((int)point.y < (int)(screenEndY - WALL_WIDTH - CIRCLE_MARGIN))))
         return true;
     else
         return false;

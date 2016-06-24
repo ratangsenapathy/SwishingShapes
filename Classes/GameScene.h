@@ -13,6 +13,7 @@ public:
     float generationTime;
     cocos2d::Size visibleSize;
     cocos2d::Vec2 origin;
+    cocos2d::Node* currentShapePoint;
     int screenCentreX;
     int screenCentreY;
     int screenEndX;
@@ -36,8 +37,6 @@ public:
     };
     std::vector<Shape> shapeList;
     
-    
-    
     virtual bool init();
     
     // a selector callback
@@ -48,6 +47,7 @@ public:
     CREATE_FUNC(GameWorld);
     cocos2d::DrawNode* getShape();
     void shapeGenerator(float dt);
+    void currentShapeChooser(float dt);
     void update(float dt);
     WallInfo getInitialEndLocation();
     void wallHit(cocos2d::Node *point,Shape shape);
