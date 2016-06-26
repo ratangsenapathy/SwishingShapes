@@ -59,6 +59,8 @@ public:
     bool isPointOnBottomWall(cocos2d::Vec2 point);
     bool isPointOnLeftWall(cocos2d::Vec2 point);
     bool isPointOnRightWall(cocos2d::Vec2 point);
+    float calculateDistance(cocos2d::Vec2 point1,cocos2d::Vec2 point2);
+    float calculateUnitTimeFromDistance(float distance);
 };
 
 #endif // __HELLOWORLD_SCENE_H__

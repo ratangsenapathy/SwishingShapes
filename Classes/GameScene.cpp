@@ -75,7 +75,8 @@ void GameWorld::shapeGenerator(float dt)
     rotationPoint->addChild(shape);
     
     WallInfo wall = getInitialEndLocation();
-    auto rotationPointAction = MoveTo::create(2, wall.positionOnWall);
+    float unitTime = calculateUnitTimeFromDistance(calculateDistance(Vec2(screenCentreX,screenCentreY),wall.positionOnWall));
+    auto rotationPointAction = MoveTo::create(unitTime, wall.positionOnWall);
     Shape entry;
     entry.rotationPoint = rotationPoint;
     entry.shape = shape;
@@ -393,8 +394,8 @@ void GameWorld::wallHit(Node *point,Shape shape)
             }
         }
     }
-    
-    shape.rotationPoint->runAction(Sequence::create(MoveTo::create(2,shape.wall.positionOnWall),CallFunc::create(CC_CALLBACK_0(GameWorld::wallHit,this,point,shape)),NULL));
+    float unitTime = calculateUnitTimeFromDistance(calculateDistance(shape.initPosition,shape.wall.positionOnWall));
+    shape.rotationPoint->runAction(Sequence::create(MoveTo::create(unitTime,shape.wall.positionOnWall),CallFunc::create(CC_CALLBACK_0(GameWorld::wallHit,this,point,shape)),NULL));
 }
 
 cocos2d::Vec2 GameWorld::getTopWallCoords(float x1, float y1, float slope)
@@ -455,4 +456,14 @@ bool GameWorld::isPointOnRightWall(cocos2d::Vec2 point)
         return true;
     else
         return false;
+}
+
+float GameWorld::calculateDistance(cocos2d::Vec2 point1, cocos2d::Vec2 point2)
+{
+    return sqrt(pow((point2.x - point1.x),2) + pow((point2.y - point1.y),2));
+}
+
+float GameWorld::calculateUnitTimeFromDistance(float distance)
+{
+    return (1/(visibleSize.width/2)*distance);
 }
