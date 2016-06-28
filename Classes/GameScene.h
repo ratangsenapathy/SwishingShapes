@@ -38,7 +38,7 @@ public:
     std::vector<Shape> shapeList;
     
     virtual bool init();
-    
+    void loadScene();
     // a selector callback
     void menuCloseCallback(cocos2d::Ref* pSender);
     void genrateShapes();
@@ -61,6 +61,8 @@ public:
     bool isPointOnRightWall(cocos2d::Vec2 point);
     float calculateDistance(cocos2d::Vec2 point1,cocos2d::Vec2 point2);
     float calculateUnitTimeFromDistance(float distance);
+    bool onTouchBegan(cocos2d::Touch *touch,cocos2d::Event *event);
+    void releaseResources();
 };
 
 #endif // __HELLOWORLD_SCENE_H__

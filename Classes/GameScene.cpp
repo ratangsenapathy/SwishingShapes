@@ -34,22 +34,35 @@ bool GameWorld::init()
     
     obstacleTime = 0.5f;
     
+    auto listener = EventListenerTouchOneByOne::create();
+    listener->setSwallowTouches(true);
+    listener->onTouchBegan = CC_CALLBACK_2(GameWorld::onTouchBegan, this);
+    _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+    
     
     auto playField = DrawNode::create();
-    playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F(247.0/255.0,196.0/255.0,81/255.0, 1));
-  
+    playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F::WHITE);//Color4F(247.0/255.0,196.0/255.0,81/255.0, 1)
+    
     this->addChild(playField);
     currentShapePoint = Node::create();
     currentShapePoint->setPosition(Vec2(screenEndX - (WALL_WIDTH),screenEndY - (WALL_WIDTH/2.0)));
     this->addChild(currentShapePoint);
+    
+    auto currentShape = getShape();
+    currentShape->setScale((CIRCLE_MARGIN)/((float)WALL_WIDTH)/1.5f);
+    currentShapePoint->addChild(currentShape);
     generationTime =1.0f;
-    this->schedule(schedule_selector(GameWorld::shapeGenerator), generationTime);
-    this->schedule(schedule_selector(GameWorld::currentShapeChooser),generationTime*4.0f);
-  //  this->scheduleUpdate();
-   
+    loadScene();
     return true;
 }
 
+void GameWorld::loadScene()
+{
+    
+    this->schedule(schedule_selector(GameWorld::shapeGenerator), generationTime);
+    this->schedule(schedule_selector(GameWorld::currentShapeChooser),generationTime*3.0f);
+    //  this->scheduleUpdate();
+}
 
 void GameWorld::menuCloseCallback(Ref* pSender)
 {
@@ -122,17 +135,29 @@ DrawNode* GameWorld::getShape()
     
     int shapeType = random(1 , CIRCLE_SHAPE);
     int colorValue =random(COLOR_RED,COLOR_ORANGE);
-    
+    std::string colorName;
     
     Color4F color;
     if(colorValue == COLOR_GREEN)
+    {
         color = Color4F::GREEN;
+        colorName = "Green";
+    }
     else if(colorValue == COLOR_BLUE)
-        color = Color4F::BLUE;
+    {
+         color = Color4F::BLUE;
+         colorName = "Blue";
+    }
     else if(colorValue == COLOR_RED)
+    {
         color = Color4F::RED;
+        colorName = "Red";
+    }
     else if(colorValue == COLOR_ORANGE)
+    {
         color = Color4F::ORANGE;
+        colorName = "Orange";
+    }
     
     
     DrawNode *shape = DrawNode::create();
@@ -167,6 +192,7 @@ DrawNode* GameWorld::getShape()
     shape->drawDot(Vec2(0,0),
                    CIRCLE_MARGIN,
                    color);
+    shape->setName(colorName);
     shape->setTag(CIRCLE_SHAPE);
     return shape;
 
@@ -466,4 +492,60 @@ float GameWorld::calculateDistance(cocos2d::Vec2 point1, cocos2d::Vec2 point2)
 float GameWorld::calculateUnitTimeFromDistance(float distance)
 {
     return (1/(visibleSize.width/2)*distance);
+}
+
+bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
+{
+    Vec2 mousePoint = touch->getLocation();
+    long count = shapeList.size();
+    
+    for(long i=0;i<count;i++)
+    {
+        Shape shape = shapeList.at(i);
+        float circleValue = pow(mousePoint.x - shape.rotationPoint->getPosition().x,2) + pow(mousePoint.y - shape.rotationPoint->getPosition().y,2) - pow(CIRCLE_MARGIN,2);
+        
+        if(circleValue <= 0)
+        {
+            DrawNode *polygon = (DrawNode *)currentShapePoint->getChildren().at(0);
+            int polygonTag = polygon->getTag();
+            if(polygonTag == CIRCLE_SHAPE)
+            {
+                std::string polygonColor = polygon->getName();
+                std::string shapeColor = shape.shape->getName();
+                if(polygonColor == shapeColor)
+                {
+                    shape.rotationPoint->stopAllActions();
+                    shape.rotationPoint->removeAllChildren();
+                    shape.rotationPoint->removeFromParent();
+                    shapeList.erase(shapeList.begin() + i);
+                    break;
+                }
+                else
+                {
+                    releaseResources();
+                    break;
+                }
+            }
+            
+        }
+    }
+    return true;
+}
+
+void GameWorld::releaseResources()
+{
+    long count =shapeList.size();
+    for(long i=0;i<count;i++)
+    {
+        Shape shape = shapeList.at(i);
+        shape.shape->removeFromParent();
+        shape.rotationPoint->removeFromParent();
+        
+    }
+    
+    shapeList.erase(shapeList.begin(),shapeList.end());
+    this->unscheduleAllCallbacks();
+    Director::getInstance()->getTextureCache()->removeUnusedTextures();
+    loadScene();
+    
 }
