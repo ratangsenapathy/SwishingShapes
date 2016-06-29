@@ -4,6 +4,7 @@
 #exclude these
 !/.gitignore
 !/Classes
+!/ScreenShots
 !/Resources
 !/CMakeLists.txt
 !/README.md

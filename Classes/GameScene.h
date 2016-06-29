@@ -28,15 +28,16 @@ public:
     struct Shape
     {
         Node* rotationPoint;
-        cocos2d::DrawNode* shape;
+       // cocos2d::DrawNode* shape;
+        cocos2d::Color4F color;
+        std::string colorName;
         int shapeType;
-        float timeDelay;
         cocos2d::Vec2 initPosition;
         struct WallInfo wall;
         
     };
-    std::vector<Shape> shapeList;
-    
+   // std::vector<Shape> shapeList;
+    std::map<Node*,Shape> shapeList;
     virtual bool init();
     void loadScene();
     // a selector callback
@@ -50,7 +51,7 @@ public:
     void currentShapeChooser(float dt);
     void update(float dt);
     WallInfo getInitialEndLocation();
-    void wallHit(cocos2d::Node *point,Shape shape);
+    void wallHit(cocos2d::Node *point,Shape &shape);
     cocos2d::Vec2 getTopWallCoords(float x1,float y1,float slope);
     cocos2d::Vec2 getBottomWallCoords(float x1,float y1,float slope);
     cocos2d::Vec2 getLeftWallCoords(float x1,float y1,float slope);

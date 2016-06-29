@@ -18,49 +18,53 @@ Scene* GameWorld::createScene()
 }
 
 // on "init" you need to initialize your instance
-bool GameWorld::init()
+bool GameWorld::init()                          //initialize the game
 {
-    visibleSize = Director::getInstance()->getVisibleSize();
+    visibleSize = Director::getInstance()->getVisibleSize();          //Calculating standard values in this set
     origin = Director::getInstance()->getVisibleOrigin();
     screenCentreX = origin.x + visibleSize.width/2;
     screenCentreY = origin.y + visibleSize.height/2;
     screenEndX = origin.x + visibleSize.width;
     screenEndY = origin.y + visibleSize.height;
     
+    
     if( !LayerColor::initWithColor(Color4B::GRAY))
     {
         return false;
     }
     
+    
     obstacleTime = 0.5f;
     
-    auto listener = EventListenerTouchOneByOne::create();
+    
+    auto listener = EventListenerTouchOneByOne::create();                       //Activating a mouse listener using MVC model
     listener->setSwallowTouches(true);
     listener->onTouchBegan = CC_CALLBACK_2(GameWorld::onTouchBegan, this);
     _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
     
     
-    auto playField = DrawNode::create();
-    playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F::WHITE);//Color4F(247.0/255.0,196.0/255.0,81/255.0, 1)
-    
+    auto playField = DrawNode::create();                                            //creating the play field
+    playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F::WHITE);//Color4F(247.0/255.0,196.0/255.0,81/255.0, 1) // Setting the dimensions of the play field
     this->addChild(playField);
-    currentShapePoint = Node::create();
+    
+    
+    currentShapePoint = Node::create();                                 // a point to attach the current shape to be touched
     currentShapePoint->setPosition(Vec2(screenEndX - (WALL_WIDTH),screenEndY - (WALL_WIDTH/2.0)));
     this->addChild(currentShapePoint);
     
-    auto currentShape = getShape();
+    auto currentShape = getShape();                                  //creating a shape to attach to the currentShapePoint node
     currentShape->setScale((CIRCLE_MARGIN)/((float)WALL_WIDTH)/1.5f);
     currentShapePoint->addChild(currentShape);
     generationTime =1.0f;
-    loadScene();
+    loadScene();                                                      //load the scene
     return true;
 }
 
 void GameWorld::loadScene()
 {
     
-    this->schedule(schedule_selector(GameWorld::shapeGenerator), generationTime);
-    this->schedule(schedule_selector(GameWorld::currentShapeChooser),generationTime*3.0f);
+    this->schedule(schedule_selector(GameWorld::shapeGenerator), generationTime);          //this event is triggered every generationTime interval to generate a new shape at the centre of the screen
+    this->schedule(schedule_selector(GameWorld::currentShapeChooser),generationTime*3.0f);    // this event changes the current shape to be changed at equal intervals
     //  this->scheduleUpdate();
 }
 
@@ -73,33 +77,55 @@ void GameWorld::menuCloseCallback(Ref* pSender)
 #endif
 }
 
-void GameWorld::shapeGenerator(float dt)
+void GameWorld::shapeGenerator(float dt)   //generates shapes
 {
     
-    auto rotationPoint = Node::create();
+    auto rotationPoint = Node::create();               //node to hang shape
     rotationPoint->setPosition(screenCentreX,screenCentreY);
     
     
-    auto shape = getShape();
-    auto rotateShapeAction = RepeatForever::create(RotateBy::create(1.0f, 180));
+    auto shape = getShape();              //get a new shape
+    auto rotateShapeAction = RepeatForever::create(RotateBy::create(1.0f, 180));  //action to be removed probably
     shape->runAction(rotateShapeAction);
     
     
     rotationPoint->addChild(shape);
     
-    WallInfo wall = getInitialEndLocation();
+    WallInfo wall = getInitialEndLocation();          //get the location where the shape should initially go i.e, a point on the wall
     float unitTime = calculateUnitTimeFromDistance(calculateDistance(Vec2(screenCentreX,screenCentreY),wall.positionOnWall));
-    auto rotationPointAction = MoveTo::create(unitTime, wall.positionOnWall);
+    auto rotationPointAction = MoveTo::create(unitTime, wall.positionOnWall);     //action to move the shape by moving the parent rotationPoint
     Shape entry;
-    entry.rotationPoint = rotationPoint;
-    entry.shape = shape;
-    entry.shapeType = entry.shape->getTag();
-    entry.timeDelay = 0;
+    entry.rotationPoint = rotationPoint;   //making an entry for std map dictionary
+    //entry.shape = shape;
+    entry.shapeType = shape->getTag();
+    //entry.timeDelay = 0;
     entry.initPosition = Vec2(screenCentreX,screenCentreY);
     entry.wall = wall;
-    shapeList.push_back(entry);
     
-    rotationPoint->runAction(Sequence::create(rotationPointAction,CallFunc::create(CC_CALLBACK_0(GameWorld::wallHit,this,rotationPoint,entry)),NULL));
+    std::string color = shape->getName();          //providing color information to entry
+    if(color == "Red")
+    {
+        entry.color = Color4F::RED;
+        entry.colorName = "Red";
+    }
+    else if(color == "Green")
+    {
+        entry.color = Color4F::GREEN;
+        entry.colorName = "Green";
+    }
+    else if(color == "Blue")
+    {
+        entry.color = Color4F::BLUE;
+        entry.colorName = "Blue";
+    }
+    else if(color == "Orange")
+    {
+        entry.color = Color4F::ORANGE;
+        entry.colorName = "Orange";
+    }
+    shapeList[rotationPoint]=entry;
+    
+    rotationPoint->runAction(Sequence::create(rotationPointAction,CallFunc::create(CC_CALLBACK_0(GameWorld::wallHit,this,rotationPoint,entry)),NULL));   //This command runs the move action and then calls a function called wallHit when the move action is over. The wall hit calculates the new reflected coordinate and reflects it on to another surface using the concept of linear equations and coordinate geometry.
     
     this->addChild(rotationPoint,1);
     
@@ -130,7 +156,7 @@ void GameWorld::currentShapeChooser(float dt)
     
 }
 
-DrawNode* GameWorld::getShape()
+DrawNode* GameWorld::getShape()              //returns a random shape
 {
     
     int shapeType = random(1 , CIRCLE_SHAPE);
@@ -202,44 +228,10 @@ DrawNode* GameWorld::getShape()
 
 void GameWorld::update(float dt)
 {
-    CCLOG("DT=%f",dt);
-    unsigned long shapeCount =shapeList.size();
     
-    for(unsigned long i=0;i<shapeCount;i++)
-    {
-        auto entry = shapeList.at(i);
-        float xCoordinate = entry.rotationPoint->getPosition().x;
-        float yCoordinate = entry.rotationPoint->getPosition().y;
-        
-        if (entry.shapeType == CIRCLE_SHAPE)
-        {
-            if(xCoordinate - CIRCLE_MARGIN <=(origin.x+WALL_WIDTH) || (xCoordinate + CIRCLE_MARGIN >= screenEndX - WALL_WIDTH) || yCoordinate - CIRCLE_MARGIN <=(origin.y+WALL_WIDTH) || (yCoordinate + CIRCLE_MARGIN >= screenEndY - WALL_WIDTH))
-            {
-                if(entry.timeDelay == 0.0f)
-                { entry.rotationPoint->stopActionByTag(ROTATIONPOINT_ACTION_TAG);
-                auto moveAction = MoveTo::create(3,Vec2(screenCentreX,screenCentreY));
-                //moveAction->setTag(ROTATIONPOINT_ACTION_TAG);
-                entry.rotationPoint->runAction(moveAction);
-                    entry.timeDelay = 0.5f;
-                }
-                else
-                {
-                    entry.timeDelay -=dt;
-                    if (entry.timeDelay<=0.0f)
-                    {
-                        entry.timeDelay = 0.0f;
-                    }
-                }
-                
-                
-            }
-        }
-        
-    }
-   
 }
 
-GameWorld::WallInfo GameWorld::getInitialEndLocation()
+GameWorld::WallInfo GameWorld::getInitialEndLocation()      //calculates the initial end location for a shape when it is generated
 {
     int chosenWall =random(TOP_WALL, RIGHT_WALL);
     WallInfo wall;
@@ -276,7 +268,7 @@ GameWorld::WallInfo GameWorld::getInitialEndLocation()
     return wall;
 }
 
-void GameWorld::wallHit(Node *point,Shape shape)
+void GameWorld::wallHit(Node *point,Shape &shape)
 {
     
     float x1 = shape.initPosition.x;
@@ -420,6 +412,24 @@ void GameWorld::wallHit(Node *point,Shape shape)
             }
         }
     }
+    
+    shape.color = Color4F(shape.color.r,shape.color.g,shape.color.b,shape.color.a/1.2);
+    
+   // if(shape.color.a<20)
+   // {
+        
+     //   return;
+    //}
+    DrawNode *nextStageShape = DrawNode::create();
+    nextStageShape->drawDot(Vec2(0,0), CIRCLE_MARGIN, shape.color);
+    nextStageShape->setName(shape.colorName);
+    nextStageShape->setTag(CIRCLE_SHAPE);
+    //shape.shape->removeFromParent();
+    //shape.shape = nextStageShape;
+    //shape.rotationPoint->addChild(shape.shape);
+    //shape.shape->drawDot(Vec2(0,0), CIRCLE_MARGIN, shape.color);
+    shape.rotationPoint->getChildren().at(0)->removeFromParent();
+    shape.rotationPoint->addChild(nextStageShape);
     float unitTime = calculateUnitTimeFromDistance(calculateDistance(shape.initPosition,shape.wall.positionOnWall));
     shape.rotationPoint->runAction(Sequence::create(MoveTo::create(unitTime,shape.wall.positionOnWall),CallFunc::create(CC_CALLBACK_0(GameWorld::wallHit,this,point,shape)),NULL));
 }
@@ -499,9 +509,10 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
     Vec2 mousePoint = touch->getLocation();
     long count = shapeList.size();
     
-    for(long i=0;i<count;i++)
+   // typedef std::map<Node *,Shape>::iterator it_type;
+    for(auto iterator=shapeList.cbegin();iterator != shapeList.cend();iterator++)
     {
-        Shape shape = shapeList.at(i);
+        Shape shape = iterator->second;
         float circleValue = pow(mousePoint.x - shape.rotationPoint->getPosition().x,2) + pow(mousePoint.y - shape.rotationPoint->getPosition().y,2) - pow(CIRCLE_MARGIN,2);
         
         if(circleValue <= 0)
@@ -511,13 +522,13 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
             if(polygonTag == CIRCLE_SHAPE)
             {
                 std::string polygonColor = polygon->getName();
-                std::string shapeColor = shape.shape->getName();
+                std::string shapeColor = shape.colorName;
                 if(polygonColor == shapeColor)
                 {
                     shape.rotationPoint->stopAllActions();
                     shape.rotationPoint->removeAllChildren();
                     shape.rotationPoint->removeFromParent();
-                    shapeList.erase(shapeList.begin() + i);
+                    shapeList.erase(iterator++);
                     break;
                 }
                 else
@@ -535,10 +546,10 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
 void GameWorld::releaseResources()
 {
     long count =shapeList.size();
-    for(long i=0;i<count;i++)
+    for(auto iterator=shapeList.cbegin();iterator != shapeList.cend();iterator++)
     {
-        Shape shape = shapeList.at(i);
-        shape.shape->removeFromParent();
+        Shape shape = iterator->second;
+        shape.rotationPoint->removeAllChildren();
         shape.rotationPoint->removeFromParent();
         
     }
