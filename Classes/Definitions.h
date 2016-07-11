@@ -26,6 +26,8 @@
 #define LEFT_WALL 3
 #define RIGHT_WALL 4
 
+#define TRANSITION_TIME 1.0
+
 #endif // __DEFINITIONS_H__
 
 

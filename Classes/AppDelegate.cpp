@@ -1,5 +1,5 @@
 #include "AppDelegate.h"
-#include "GameScene.h"
+#include "MainMenuScene.h"
 
 USING_NS_CC;
 
@@ -73,9 +73,11 @@ bool AppDelegate::applicationDidFinishLaunching() {
     }
 
     register_all_packages();
+    
+    sdkbox::PluginAdColony::init();
 
     // create a scene. it's an autorelease object
-    auto scene = GameWorld::createScene();
+    auto scene = MainMenuScene::createScene();
 
     // run
     director->runWithScene(scene);

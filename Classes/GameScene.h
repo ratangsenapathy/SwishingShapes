@@ -63,6 +63,7 @@ public:
     float calculateDistance(cocos2d::Vec2 point1,cocos2d::Vec2 point2);
     float calculateUnitTimeFromDistance(float distance);
     bool onTouchBegan(cocos2d::Touch *touch,cocos2d::Event *event);
+    cocos2d::Color3B getRandomColor();
     void releaseResources();
 };
 

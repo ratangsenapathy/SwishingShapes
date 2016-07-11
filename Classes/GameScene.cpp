@@ -45,16 +45,19 @@ bool GameWorld::init()                          //initialize the game
     
     auto playField = DrawNode::create();                                            //creating the play field
     playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F::WHITE);//Color4F(247.0/255.0,196.0/255.0,81/255.0, 1) // Setting the dimensions of the play field
+  //  playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH),Color4F(247.0/255.0,196.0/255.0,81/255.0, 1));
     this->addChild(playField);
     
     
-    currentShapePoint = Node::create();                                 // a point to attach the current shape to be touched
+   /* currentShapePoint = Node::create();                                 // a point to attach the current shape to be touched
     currentShapePoint->setPosition(Vec2(screenEndX - (WALL_WIDTH),screenEndY - (WALL_WIDTH/2.0)));
     this->addChild(currentShapePoint);
     
     auto currentShape = getShape();                                  //creating a shape to attach to the currentShapePoint node
     currentShape->setScale((CIRCLE_MARGIN)/((float)WALL_WIDTH)/1.5f);
-    currentShapePoint->addChild(currentShape);
+    currentShapePoint->addChild(currentShape);*/
+    
+    this->setColor(getRandomColor());
     generationTime =1.0f;
     loadScene();                                                      //load the scene
     return true;
@@ -75,6 +78,20 @@ void GameWorld::menuCloseCallback(Ref* pSender)
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
     exit(0);
 #endif
+}
+
+Color3B GameWorld::getRandomColor()
+{
+    int colorValue =random(COLOR_RED,COLOR_ORANGE);
+    
+    if(colorValue == COLOR_RED)
+        return Color3B::RED;
+    else if(colorValue == COLOR_GREEN)
+        return Color3B::GREEN;
+    else if(colorValue == COLOR_BLUE)
+        return Color3B::BLUE;
+    else
+        return Color3B::ORANGE;
 }
 
 void GameWorld::shapeGenerator(float dt)   //generates shapes
@@ -129,19 +146,7 @@ void GameWorld::shapeGenerator(float dt)   //generates shapes
     
     this->addChild(rotationPoint,1);
     
-  //  int direction =random(0,DIRECTION_COUNT-1);
-    
-   /* auto rotationPointMoveAction =  RepeatForever::create(
-                                                          MoveBy::create(
-                                                                         obstacleTime, Vec2(
-                                                                                            shapeDirections[direction][0]*DIRECTION_SPEED,              shapeDirections[direction][1]*DIRECTION_SPEED)));
-    */
-   // rotationPointMoveAction->setTag(ROTATIONPOINT_ACTION_TAG);
-   // rotationPoint->runAction(rotationPointMoveAction);
-    
-    
-   
-    
+
     
     
    // shapeList.insert(0, entry);
@@ -149,10 +154,11 @@ void GameWorld::shapeGenerator(float dt)   //generates shapes
 
 void GameWorld::currentShapeChooser(float dt)
 {
-    auto currentShape = getShape();
+    /*auto currentShape = getShape();
     currentShape->setScale((CIRCLE_MARGIN)/((float)WALL_WIDTH)/1.5f);
     currentShapePoint->removeAllChildren();
-    currentShapePoint->addChild(currentShape);
+    currentShapePoint->addChild(currentShape);*/
+    this->setColor(getRandomColor());
     
 }
 
@@ -517,13 +523,13 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
         
         if(circleValue <= 0)
         {
-            DrawNode *polygon = (DrawNode *)currentShapePoint->getChildren().at(0);
-            int polygonTag = polygon->getTag();
-            if(polygonTag == CIRCLE_SHAPE)
-            {
-                std::string polygonColor = polygon->getName();
-                std::string shapeColor = shape.colorName;
-                if(polygonColor == shapeColor)
+            //DrawNode *polygon = (DrawNode *)currentShapePoint->getChildren().at(0);
+            //int polygonTag = polygon->getTag();
+           // if(polygonTag == CIRCLE_SHAPE)
+           // {
+                //std::string polygonColor = polygon->getName();
+                //std::string shapeColor = shape.colorName;
+                if(this->getColor() == Color3B(shape.color))
                 {
                     shape.rotationPoint->stopAllActions();
                     shape.rotationPoint->removeAllChildren();
@@ -536,7 +542,7 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
                     releaseResources();
                     break;
                 }
-            }
+            //}
             
         }
     }

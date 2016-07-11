@@ -1,6 +1,6 @@
 #ifndef  _APP_DELEGATE_H_
 #define  _APP_DELEGATE_H_
-
+#include "PluginAdColony/PluginAdColony.h"
 #include "cocos2d.h"
 
 /**
