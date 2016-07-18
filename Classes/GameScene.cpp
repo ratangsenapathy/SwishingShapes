@@ -36,36 +36,78 @@ bool GameWorld::init()                          //initialize the game
     
     obstacleTime = 0.5f;
     
+    sdkbox::PluginAdColony::show("video");
     
+    loadMainMenu();
+    return true;
+ }
+
+void GameWorld::loadMainMenu()             //This will load the main menu as the game screen and main menu hass common areas
+{
+    isMainMenuScreen = true;
+    auto keypadListener = EventListenerKeyboard::create();
+    keypadListener->onKeyPressed = CC_CALLBACK_2(GameWorld::onKeyPressed, this);
+    keypadListener->onKeyReleased = CC_CALLBACK_2(GameWorld::onKeyReleased, this);
+    _eventDispatcher->addEventListenerWithSceneGraphPriority(keypadListener, this);
+    
+    auto playField = DrawNode::create();                                            //creating the play field
+    playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F::WHITE);//Color4F(247.0/255.0,196.0/255.0,81/255.0, 1) // Setting the dimensions of the play field
+    //  playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH),Color4F(247.0/255.0,196.0/255.0,81/255.0, 1));
+    this->addChild(playField);
+    
+    titlePart = Label::createWithTTF("Tap Color Score", "fonts/Zygoth.ttf", visibleSize.height/20);
+    
+    titlePart->setPosition(Vec2(screenCentreX,screenEndY - WALL_WIDTH*3));
+    this->addChild(titlePart,2);
+    
+    this->setColor(getRandomColor());
+    titlePart->setColor(this->getColor());
+    generationTime =1.0f;
+    
+    this->schedule(schedule_selector(GameWorld::shapeGenerator), generationTime);          //this event is triggered every generationTime interval to generate a new shape at the centre of the screen
+    this->schedule(schedule_selector(GameWorld::currentShapeChooser),generationTime*3.0f);    // this event changes the current shape to be changed at equal intervals
+    //  this->scheduleUpdate();
+
+
+    playButton = MenuItemImage::create("res/playButton.png", "res/playButton.png",
+                                            CC_CALLBACK_1(GameWorld::onPlayButtonClick, this));
+    playButton->setScale(visibleSize.width/playButton->getContentSize().width/2.5);
+    playButton->setPosition(Point(visibleSize.width/2+origin.x, visibleSize.height*0.6+origin.y));
+    playButton->setColor(this->getColor());
+    
+    int best = UserDefault::getInstance()->getIntegerForKey("Best", 0);
+    std::stringstream bestScoreStream;
+    bestScoreStream << best;
+    char bestString[20];
+    sprintf(bestString,"Best: %d", best);
+    bestScore=Label::createWithTTF(bestString, "fonts/arial.ttf", visibleSize.width/15);
+    bestScore->setColor(this->getColor());
+    bestScore->setPosition(Vec2(screenCentreX,screenCentreY - 3*WALL_WIDTH));
+    this->addChild(bestScore);
+    
+    mainMenu = Menu::create(playButton,NULL);
+    mainMenu->setPosition(Point::ZERO);
+    
+    this->addChild(mainMenu,2);
+}
+
+void GameWorld::onPlayButtonClick(cocos2d::Ref *ref)
+{
+     releaseResources();
     auto listener = EventListenerTouchOneByOne::create();                       //Activating a mouse listener using MVC model
     listener->setSwallowTouches(true);
     listener->onTouchBegan = CC_CALLBACK_2(GameWorld::onTouchBegan, this);
     _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
-    
-    
-    auto playField = DrawNode::create();                                            //creating the play field
-    playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F::WHITE);//Color4F(247.0/255.0,196.0/255.0,81/255.0, 1) // Setting the dimensions of the play field
-  //  playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH),Color4F(247.0/255.0,196.0/255.0,81/255.0, 1));
-    this->addChild(playField);
-    
-    
-   /* currentShapePoint = Node::create();                                 // a point to attach the current shape to be touched
-    currentShapePoint->setPosition(Vec2(screenEndX - (WALL_WIDTH),screenEndY - (WALL_WIDTH/2.0)));
-    this->addChild(currentShapePoint);
-    
-    auto currentShape = getShape();                                  //creating a shape to attach to the currentShapePoint node
-    currentShape->setScale((CIRCLE_MARGIN)/((float)WALL_WIDTH)/1.5f);
-    currentShapePoint->addChild(currentShape);*/
-    
-    this->setColor(getRandomColor());
-    generationTime =1.0f;
-    loadScene();                                                      //load the scene
-    return true;
+    loadGame();
 }
 
-void GameWorld::loadScene()
+void GameWorld::loadGame()
 {
     
+    isMainMenuScreen = false;
+    score = Label::createWithTTF("0", "fonts/MarkerFelt2.ttf", visibleSize.width/20.0f);
+    score->setPosition(Vec2(screenCentreX,screenEndY - (WALL_WIDTH/2.0)));
+    this->addChild(score);
     this->schedule(schedule_selector(GameWorld::shapeGenerator), generationTime);          //this event is triggered every generationTime interval to generate a new shape at the centre of the screen
     this->schedule(schedule_selector(GameWorld::currentShapeChooser),generationTime*3.0f);    // this event changes the current shape to be changed at equal intervals
     //  this->scheduleUpdate();
@@ -159,13 +201,17 @@ void GameWorld::currentShapeChooser(float dt)
     currentShapePoint->removeAllChildren();
     currentShapePoint->addChild(currentShape);*/
     this->setColor(getRandomColor());
-    
+    if(titlePart!=NULL)
+    titlePart->setColor(this->getColor());
+    if(bestScore!=NULL)
+    bestScore->setColor(this->getColor());
+    if(playButton!=NULL)
+    playButton->setColor(this->getColor());
 }
 
 DrawNode* GameWorld::getShape()              //returns a random shape
 {
     
-    int shapeType = random(1 , CIRCLE_SHAPE);
     int colorValue =random(COLOR_RED,COLOR_ORANGE);
     std::string colorName;
     
@@ -437,6 +483,7 @@ void GameWorld::wallHit(Node *point,Shape &shape)
     shape.rotationPoint->getChildren().at(0)->removeFromParent();
     shape.rotationPoint->addChild(nextStageShape);
     float unitTime = calculateUnitTimeFromDistance(calculateDistance(shape.initPosition,shape.wall.positionOnWall));
+    shapeList[shape.rotationPoint].color = shape.color;
     shape.rotationPoint->runAction(Sequence::create(MoveTo::create(unitTime,shape.wall.positionOnWall),CallFunc::create(CC_CALLBACK_0(GameWorld::wallHit,this,point,shape)),NULL));
 }
 
@@ -535,11 +582,23 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
                     shape.rotationPoint->removeAllChildren();
                     shape.rotationPoint->removeFromParent();
                     shapeList.erase(iterator++);
+                    //CCLOG("Alpha=%f",shape.color.a);
+                    scoreValue +=  1.0/shape.color.a *5.0;
+                    std::stringstream scoreStringStream;
+                    scoreStringStream << scoreValue;
+                    std::string scoreString = scoreStringStream.str();
+                    score->setString(scoreString);
                     break;
                 }
                 else
                 {
                     releaseResources();
+                    int best = UserDefault::getInstance()->getIntegerForKey("Best", 0);
+                    if(scoreValue > best)
+                        UserDefault::getInstance()->setIntegerForKey("Best", scoreValue);
+                    loadMainMenu();
+                   // loadGameEndedScreen();
+                    //int bestScore = UserDefault::getInstance()->getIntegerForKey("Best", 0);
                     break;
                 }
             //}
@@ -549,9 +608,11 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
     return true;
 }
 
+
+
 void GameWorld::releaseResources()
 {
-    long count =shapeList.size();
+    //long count =shapeList.size();
     for(auto iterator=shapeList.cbegin();iterator != shapeList.cend();iterator++)
     {
         Shape shape = iterator->second;
@@ -561,8 +622,47 @@ void GameWorld::releaseResources()
     }
     
     shapeList.erase(shapeList.begin(),shapeList.end());
-    this->unscheduleAllCallbacks();
-    Director::getInstance()->getTextureCache()->removeUnusedTextures();
-    loadScene();
+
+    if(score != NULL){
+        score->removeFromParent();
+        score = NULL;
+    }
+        if(mainMenu !=NULL)
+    {
+        mainMenu->removeFromParent();
+        mainMenu = NULL;
+    }
     
+    if(titlePart !=NULL)
+    {
+        titlePart->removeFromParent();
+        titlePart = NULL;
+    }
+    
+    if(bestScore != NULL)
+    {
+        bestScore->removeFromParent();
+        bestScore = NULL;
+    }
+    
+    if(playButton !=NULL)
+    {
+        playButton->removeFromParent();
+        playButton = NULL;
+    }
+    
+    this->unscheduleAllCallbacks();
+    //if(Director::getInstance()->getTextureCache() !=NULL)
+    Director::getInstance()->getTextureCache()->removeUnusedTextures();
+    //loadGame();
+    
+}
+
+void GameWorld::onKeyReleased(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event *event)
+{
+    if (keyCode == EventKeyboard::KeyCode::KEY_BACK)
+    {
+       if(isMainMenuScreen)
+        Director::getInstance()->end();
+    }
 }

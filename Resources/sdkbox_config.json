@@ -1,36 +1,53 @@
 {
     "android": {
+        "Review": {
+            "LaunchLimit": 3, 
+            "DayForReminding": 1, 
+            "tryPromptWhenInit": true, 
+            "DayLimit": 0, 
+            "LaunchForReminding": 2, 
+            "UserEventLimit": 0
+        }, 
         "AdColony": {
             "debug": true, 
-            "id": "app185a7e71e1714831a49ec7", 
+            "id": "appe5260f8358ee4cc683", 
             "ads": {
                 "v4vc": {
                     "v4vc": true, 
                     "pre_popup": true, 
-                    "zone": "vz1fd5a8b2bf6841a0a4b826", 
+                    "zone": "vzdffe532a4d1c46fdb5", 
                     "post_popup": true
                 }, 
                 "video": {
                     "v4vc": false, 
-                    "zone": "vz06e8c32a037749699e7050"
+                    "zone": "vzdffe532a4d1c46fdb5"
                 }
             }
         }
     }, 
     "ios": {
+        "Review": {
+            "LaunchLimit": 3, 
+            "DayForReminding": 1, 
+            "tryPromptWhenInit": true, 
+            "AppID": "587767923", 
+            "DayLimit": 0, 
+            "LaunchForReminding": 2, 
+            "UserEventLimit": 0
+        }, 
         "AdColony": {
             "debug": true, 
-            "id": "appbdee68ae27024084bb334a", 
+            "id": "appe5260f8358ee4cc683", 
             "ads": {
                 "v4vc": {
                     "v4vc": true, 
                     "pre_popup": true, 
-                    "zone": "vzf8e4e97704c4445c87504e", 
+                    "zone": "vzdffe532a4d1c46fdb5", 
                     "post_popup": true
                 }, 
                 "video": {
                     "v4vc": false, 
-                    "zone": "vzf8fb4670a60e4a139d01b5"
+                    "zone": "vzdffe532a4d1c46fdb5"
                 }
             }
         }

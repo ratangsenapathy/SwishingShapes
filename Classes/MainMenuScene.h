@@ -2,7 +2,8 @@
 #define __MAIN_MENU_SCENE_H__
 
 #include "PluginAdColony/PluginAdColony.h"
-
+#include "cocos2d.h"
+#include "PluginReview/PluginReview.h"
 class MainMenuScene : public cocos2d::LayerColor
 {
 public:
@@ -16,7 +17,7 @@ public:
     void goToGameScene(cocos2d::Ref* ref);
     // implement the "static create()" method manually
     CREATE_FUNC(MainMenuScene);
-    
+    cocos2d::Color4F getRandomColor();
      
     
 };

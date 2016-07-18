@@ -3,7 +3,7 @@
 
 #include "cocos2d.h"
 #include "Definitions.h"
-
+#include "PluginAdColony/PluginAdColony.h"
 class GameWorld : public cocos2d::LayerColor
 {
 public:
@@ -14,11 +14,17 @@ public:
     cocos2d::Size visibleSize;
     cocos2d::Vec2 origin;
     cocos2d::Node* currentShapePoint;
+    cocos2d::Label* score = NULL;
+    cocos2d::Menu* mainMenu = NULL;
+    cocos2d::Label* titlePart = NULL;
+    cocos2d::Label* bestScore = NULL;
+    cocos2d::MenuItemImage* playButton;
+    int scoreValue;
     int screenCentreX;
     int screenCentreY;
     int screenEndX;
     int screenEndY;
-    
+    bool isMainMenuScreen;
     struct WallInfo
     {
         int wallType;
@@ -39,7 +45,8 @@ public:
    // std::vector<Shape> shapeList;
     std::map<Node*,Shape> shapeList;
     virtual bool init();
-    void loadScene();
+    void loadGame();
+    void onPlayButtonClick(cocos2d::Ref* ref);
     // a selector callback
     void menuCloseCallback(cocos2d::Ref* pSender);
     void genrateShapes();
@@ -65,6 +72,9 @@ public:
     bool onTouchBegan(cocos2d::Touch *touch,cocos2d::Event *event);
     cocos2d::Color3B getRandomColor();
     void releaseResources();
+    void loadMainMenu();
+    void onKeyReleased(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event *event);
+  //  void loadGameEndedScreen();
 };
 
 #endif // __HELLOWORLD_SCENE_H__
