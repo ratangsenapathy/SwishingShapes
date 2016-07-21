@@ -74,29 +74,17 @@ void GameWorld::loadMainMenu()             //This will load the main menu as the
     
 
     bool soundStatus = UserDefault::getInstance()->getBoolForKey("SoundOn", true);
-    /*if(soundStatus)
-    {
-        soundButton = MenuItemToggle::create(MenuItemImage::create("res/soundButton.png", "res/soundButton.png"));
-        soundButton->setTag(1);
-    }
-    else
-    {
-        
-        soundButton = MenuItemToggle::create(MenuItemImage::create("res/soundButton.png", "res/soundButton.png"));
-        soundButton->setColor(Color3B::GRAY);
-        soundButton->setTag(1);
-    }
-    
-    soundButton->setScale(visibleSize.width/soundButton->getContentSize().width/7.0);
-    soundButton->setPosition(Point(screenCentreX,screenCentreY - 6*WALL_WIDTH));
-    soundButton->setTag(1);
-    soundButton->setCallback(CC_CALLBACK_1(GameWorld::onSoundButtonClick, this));
-    */
-    soundButton = addToggleButton("res/soundButton.png", soundButton, soundStatus, Vec2(screenCentreX,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onSoundButtonClick, this));
+       soundButton = addToggleButton("res/soundButton.png", soundButton, soundStatus, Vec2(screenCentreX,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onSoundButtonClick, this));
     
     
     bool musicStatus = UserDefault::getInstance()->getBoolForKey("MusicOn", true);
     musicButton = addToggleButton("res/musicButton.png", musicButton, musicStatus, Vec2(screenCentreX- 3*WALL_WIDTH,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onMusicButtonClick, this));
+    
+    if(musicButton)
+    {
+        CocosDenshion::SimpleAudioEngine::getInstance()->playBackgroundMusic("audio/gameMusic.mp3",true);
+    }
+    
     mainMenu = Menu::create(playButton,soundButton,musicButton,NULL);
     mainMenu->setPosition(Point::ZERO);
     
@@ -699,11 +687,13 @@ void GameWorld::onMusicButtonClick(cocos2d::Ref *ref)
         musicButton->setColor(Color3B::GRAY);
         musicButton->setTag(0);
         UserDefault::getInstance()->setBoolForKey("MusicOn", false);
+        CocosDenshion::SimpleAudioEngine::getInstance()->stopBackgroundMusic();
     }
     else
     {
         musicButton->setColor(Color3B::WHITE);
         musicButton->setTag(1);
         UserDefault::getInstance()->setBoolForKey("MusicOn", true);
+        CocosDenshion::SimpleAudioEngine::getInstance()->playBackgroundMusic("audio/gameMusic.mp3",true);
     }
 }
