@@ -75,7 +75,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     register_all_packages();
     
     sdkbox::PluginAdColony::init();
-    sdkbox::PluginReview::init();
+  //  sdkbox::PluginReview::init();
 
     // create a scene. it's an autorelease object
     auto scene = GameWorld::createScene();

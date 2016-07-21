@@ -4,6 +4,8 @@
 #include "cocos2d.h"
 #include "Definitions.h"
 #include "PluginAdColony/PluginAdColony.h"
+#include "SimpleAudioEngine.h"
+
 class GameWorld : public cocos2d::LayerColor
 {
 public:
@@ -18,7 +20,11 @@ public:
     cocos2d::Menu* mainMenu = NULL;
     cocos2d::Label* titlePart = NULL;
     cocos2d::Label* bestScore = NULL;
-    cocos2d::MenuItemImage* playButton;
+    cocos2d::MenuItemToggle* soundButton = NULL;
+    cocos2d::MenuItemToggle* musicButton = NULL;
+   // cocos2d::MenuItemImage* soundOn;
+   // cocos2d::MenuItemImage* soundOff;
+    cocos2d::MenuItemImage* playButton = NULL;
     int scoreValue;
     int screenCentreX;
     int screenCentreY;
@@ -47,6 +53,7 @@ public:
     virtual bool init();
     void loadGame();
     void onPlayButtonClick(cocos2d::Ref* ref);
+    void onSoundButtonClick(cocos2d::Ref* ref);
     // a selector callback
     void menuCloseCallback(cocos2d::Ref* pSender);
     void genrateShapes();
@@ -74,7 +81,8 @@ public:
     void releaseResources();
     void loadMainMenu();
     void onKeyReleased(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event *event);
-  //  void loadGameEndedScreen();
+    cocos2d::MenuItemToggle* addToggleButton(std::string buttonName,cocos2d::MenuItemToggle * toggleButton,bool status,cocos2d::Vec2 position,const cocos2d::ccMenuCallback &callback);
+    void onMusicButtonClick(cocos2d::Ref *ref);
 };
 
 #endif // __HELLOWORLD_SCENE_H__

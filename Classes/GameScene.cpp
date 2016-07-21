@@ -26,17 +26,19 @@ bool GameWorld::init()                          //initialize the game
     screenCentreY = origin.y + visibleSize.height/2;
     screenEndX = origin.x + visibleSize.width;
     screenEndY = origin.y + visibleSize.height;
-    
+
     
     if( !LayerColor::initWithColor(Color4B::GRAY))
     {
         return false;
     }
     
-    
     obstacleTime = 0.5f;
     
-    sdkbox::PluginAdColony::show("video");
+    auto playField = DrawNode::create();                                            //creating the play field
+    playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F::WHITE);//Color4F(247.0/255.0,196.0/255.0,81/255.0, 1) // Setting the dimensions of the play field
+    this->addChild(playField);
+    
     
     loadMainMenu();
     return true;
@@ -44,16 +46,13 @@ bool GameWorld::init()                          //initialize the game
 
 void GameWorld::loadMainMenu()             //This will load the main menu as the game screen and main menu hass common areas
 {
+    
     isMainMenuScreen = true;
     auto keypadListener = EventListenerKeyboard::create();
     keypadListener->onKeyPressed = CC_CALLBACK_2(GameWorld::onKeyPressed, this);
     keypadListener->onKeyReleased = CC_CALLBACK_2(GameWorld::onKeyReleased, this);
     _eventDispatcher->addEventListenerWithSceneGraphPriority(keypadListener, this);
     
-    auto playField = DrawNode::create();                                            //creating the play field
-    playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F::WHITE);//Color4F(247.0/255.0,196.0/255.0,81/255.0, 1) // Setting the dimensions of the play field
-    //  playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH),Color4F(247.0/255.0,196.0/255.0,81/255.0, 1));
-    this->addChild(playField);
     
     titlePart = Label::createWithTTF("Tap Color Score", "fonts/Zygoth.ttf", visibleSize.height/20);
     
@@ -66,14 +65,40 @@ void GameWorld::loadMainMenu()             //This will load the main menu as the
     
     this->schedule(schedule_selector(GameWorld::shapeGenerator), generationTime);          //this event is triggered every generationTime interval to generate a new shape at the centre of the screen
     this->schedule(schedule_selector(GameWorld::currentShapeChooser),generationTime*3.0f);    // this event changes the current shape to be changed at equal intervals
-    //  this->scheduleUpdate();
-
 
     playButton = MenuItemImage::create("res/playButton.png", "res/playButton.png",
                                             CC_CALLBACK_1(GameWorld::onPlayButtonClick, this));
     playButton->setScale(visibleSize.width/playButton->getContentSize().width/2.5);
     playButton->setPosition(Point(visibleSize.width/2+origin.x, visibleSize.height*0.6+origin.y));
     playButton->setColor(this->getColor());
+    
+
+    bool soundStatus = UserDefault::getInstance()->getBoolForKey("SoundOn", true);
+    /*if(soundStatus)
+    {
+        soundButton = MenuItemToggle::create(MenuItemImage::create("res/soundButton.png", "res/soundButton.png"));
+        soundButton->setTag(1);
+    }
+    else
+    {
+        
+        soundButton = MenuItemToggle::create(MenuItemImage::create("res/soundButton.png", "res/soundButton.png"));
+        soundButton->setColor(Color3B::GRAY);
+        soundButton->setTag(1);
+    }
+    
+    soundButton->setScale(visibleSize.width/soundButton->getContentSize().width/7.0);
+    soundButton->setPosition(Point(screenCentreX,screenCentreY - 6*WALL_WIDTH));
+    soundButton->setTag(1);
+    soundButton->setCallback(CC_CALLBACK_1(GameWorld::onSoundButtonClick, this));
+    */
+    soundButton = addToggleButton("res/soundButton.png", soundButton, soundStatus, Vec2(screenCentreX,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onSoundButtonClick, this));
+    
+    
+    bool musicStatus = UserDefault::getInstance()->getBoolForKey("MusicOn", true);
+    musicButton = addToggleButton("res/musicButton.png", musicButton, musicStatus, Vec2(screenCentreX- 3*WALL_WIDTH,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onMusicButtonClick, this));
+    mainMenu = Menu::create(playButton,soundButton,musicButton,NULL);
+    mainMenu->setPosition(Point::ZERO);
     
     int best = UserDefault::getInstance()->getIntegerForKey("Best", 0);
     std::stringstream bestScoreStream;
@@ -85,10 +110,32 @@ void GameWorld::loadMainMenu()             //This will load the main menu as the
     bestScore->setPosition(Vec2(screenCentreX,screenCentreY - 3*WALL_WIDTH));
     this->addChild(bestScore);
     
-    mainMenu = Menu::create(playButton,NULL);
-    mainMenu->setPosition(Point::ZERO);
+    
     
     this->addChild(mainMenu,2);
+}
+
+cocos2d::MenuItemToggle* GameWorld::addToggleButton(std::string buttonName,cocos2d::MenuItemToggle * toggleButton,bool status,cocos2d::Vec2 position, const cocos2d::ccMenuCallback &callback)
+{
+    if(status)
+    {
+        toggleButton = MenuItemToggle::create(MenuItemImage::create(buttonName, buttonName));
+        toggleButton->setTag(1);
+    }
+    else
+    {
+        
+        toggleButton = MenuItemToggle::create(MenuItemImage::create(buttonName, buttonName));
+        toggleButton->setColor(Color3B::GRAY);
+        toggleButton->setTag(1);
+    }
+    
+    toggleButton->setScale(visibleSize.width/toggleButton->getContentSize().width/7.0);
+    toggleButton->setPosition(position);
+    toggleButton->setTag(1);
+    toggleButton->setCallback(callback);
+    
+    return toggleButton;
 }
 
 void GameWorld::onPlayButtonClick(cocos2d::Ref *ref)
@@ -105,12 +152,14 @@ void GameWorld::loadGame()
 {
     
     isMainMenuScreen = false;
+    sdkbox::PluginAdColony::show("video");
+    while(sdkbox::PluginAdColony::videoAdCurrentlyRunning());
+    CCLOG("Lol Nice");
     score = Label::createWithTTF("0", "fonts/MarkerFelt2.ttf", visibleSize.width/20.0f);
     score->setPosition(Vec2(screenCentreX,screenEndY - (WALL_WIDTH/2.0)));
     this->addChild(score);
     this->schedule(schedule_selector(GameWorld::shapeGenerator), generationTime);          //this event is triggered every generationTime interval to generate a new shape at the centre of the screen
     this->schedule(schedule_selector(GameWorld::currentShapeChooser),generationTime*3.0f);    // this event changes the current shape to be changed at equal intervals
-    //  this->scheduleUpdate();
 }
 
 void GameWorld::menuCloseCallback(Ref* pSender)
@@ -138,15 +187,12 @@ Color3B GameWorld::getRandomColor()
 
 void GameWorld::shapeGenerator(float dt)   //generates shapes
 {
-    
     auto rotationPoint = Node::create();               //node to hang shape
     rotationPoint->setPosition(screenCentreX,screenCentreY);
-    
     
     auto shape = getShape();              //get a new shape
     auto rotateShapeAction = RepeatForever::create(RotateBy::create(1.0f, 180));  //action to be removed probably
     shape->runAction(rotateShapeAction);
-    
     
     rotationPoint->addChild(shape);
     
@@ -155,9 +201,7 @@ void GameWorld::shapeGenerator(float dt)   //generates shapes
     auto rotationPointAction = MoveTo::create(unitTime, wall.positionOnWall);     //action to move the shape by moving the parent rotationPoint
     Shape entry;
     entry.rotationPoint = rotationPoint;   //making an entry for std map dictionary
-    //entry.shape = shape;
     entry.shapeType = shape->getTag();
-    //entry.timeDelay = 0;
     entry.initPosition = Vec2(screenCentreX,screenCentreY);
     entry.wall = wall;
     
@@ -188,18 +232,11 @@ void GameWorld::shapeGenerator(float dt)   //generates shapes
     
     this->addChild(rotationPoint,1);
     
-
-    
-    
-   // shapeList.insert(0, entry);
 }
 
 void GameWorld::currentShapeChooser(float dt)
 {
-    /*auto currentShape = getShape();
-    currentShape->setScale((CIRCLE_MARGIN)/((float)WALL_WIDTH)/1.5f);
-    currentShapePoint->removeAllChildren();
-    currentShapePoint->addChild(currentShape);*/
+
     this->setColor(getRandomColor());
     if(titlePart!=NULL)
     titlePart->setColor(this->getColor());
@@ -239,34 +276,6 @@ DrawNode* GameWorld::getShape()              //returns a random shape
     
     
     DrawNode *shape = DrawNode::create();
-   /* if(shapeType <= TRIANGLE_SHAPE)
-    {
-        shape->drawTriangle(Vec2(TRIANGLE_MARGIN,TRIANGLE_MARGIN),
-                            Vec2(-0.5*TRIANGLE_MARGIN-sqrt(3)/2.0*TRIANGLE_MARGIN,sqrt(3)/2.0*TRIANGLE_MARGIN - 0.5*TRIANGLE_MARGIN),
-                            Vec2(-0.5*TRIANGLE_MARGIN+sqrt(3)/2.0*TRIANGLE_MARGIN,-sqrt(3)/2.0*TRIANGLE_MARGIN-0.5*TRIANGLE_MARGIN),
-                            color);
-        shape->setTag(TRIANGLE_SHAPE);
-        
-       // shape->drawTriangle(Vec2(0,TRIANGLE_MARGIN*1.5),
-       //                     Vec2(TRIANGLE_MARGIN*0.75,-TRIANGLE_MARGIN*0.75),
-       //                     Vec2(-TRIANGLE_MARGIN*0.75,-TRIANGLE_MARGIN*0.75),
-       //                     color);
-    }
-    else if(shapeType <= SQUARE_SHAPE)
-    {
-        shape->drawSolidRect(Vec2(-SQUARE_MARGIN,SQUARE_MARGIN),
-                             Vec2(SQUARE_MARGIN,-SQUARE_MARGIN),
-                             color);
-        shape->setTag(SQUARE_SHAPE);
-    }
-    else if(shapeType <= CIRCLE_SHAPE)
-    {
-        shape->drawDot(Vec2(0,0),
-                       CIRCLE_MARGIN,
-                       color);
-        shape->setTag(CIRCLE_SHAPE);
-    }*/
-    
     shape->drawDot(Vec2(0,0),
                    CIRCLE_MARGIN,
                    color);
@@ -288,10 +297,6 @@ GameWorld::WallInfo GameWorld::getInitialEndLocation()      //calculates the ini
     int chosenWall =random(TOP_WALL, RIGHT_WALL);
     WallInfo wall;
     
-    /*wall.wallType = RIGHT_WALL;
-    int position = random(origin.y +WALL_WIDTH+CIRCLE_MARGIN,screenEndY- WALL_WIDTH - CIRCLE_MARGIN);
-    wall.positionOnWall =  Vec2(screenEndX-WALL_WIDTH-CIRCLE_MARGIN,position);
-    return wall;*/
     if(chosenWall == TOP_WALL)
     {
         wall.wallType = TOP_WALL;
@@ -467,19 +472,12 @@ void GameWorld::wallHit(Node *point,Shape &shape)
     
     shape.color = Color4F(shape.color.r,shape.color.g,shape.color.b,shape.color.a/1.2);
     
-   // if(shape.color.a<20)
-   // {
-        
-     //   return;
-    //}
+  
     DrawNode *nextStageShape = DrawNode::create();
     nextStageShape->drawDot(Vec2(0,0), CIRCLE_MARGIN, shape.color);
     nextStageShape->setName(shape.colorName);
     nextStageShape->setTag(CIRCLE_SHAPE);
-    //shape.shape->removeFromParent();
-    //shape.shape = nextStageShape;
-    //shape.rotationPoint->addChild(shape.shape);
-    //shape.shape->drawDot(Vec2(0,0), CIRCLE_MARGIN, shape.color);
+    
     shape.rotationPoint->getChildren().at(0)->removeFromParent();
     shape.rotationPoint->addChild(nextStageShape);
     float unitTime = calculateUnitTimeFromDistance(calculateDistance(shape.initPosition,shape.wall.positionOnWall));
@@ -562,7 +560,7 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
     Vec2 mousePoint = touch->getLocation();
     long count = shapeList.size();
     
-   // typedef std::map<Node *,Shape>::iterator it_type;
+
     for(auto iterator=shapeList.cbegin();iterator != shapeList.cend();iterator++)
     {
         Shape shape = iterator->second;
@@ -570,14 +568,16 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
         
         if(circleValue <= 0)
         {
-            //DrawNode *polygon = (DrawNode *)currentShapePoint->getChildren().at(0);
-            //int polygonTag = polygon->getTag();
-           // if(polygonTag == CIRCLE_SHAPE)
-           // {
-                //std::string polygonColor = polygon->getName();
-                //std::string shapeColor = shape.colorName;
                 if(this->getColor() == Color3B(shape.color))
                 {
+                    bool soundsOn = UserDefault::getInstance()->getBoolForKey("SoundOn",true);
+                    //soundsOn=false;
+                    if(soundsOn)
+                    {
+                        CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("audio/shimmer.mp3");
+                        CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("audio/shimmer.mp3");
+                    }
+                    
                     shape.rotationPoint->stopAllActions();
                     shape.rotationPoint->removeAllChildren();
                     shape.rotationPoint->removeFromParent();
@@ -592,16 +592,16 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
                 }
                 else
                 {
+                  
                     releaseResources();
                     int best = UserDefault::getInstance()->getIntegerForKey("Best", 0);
                     if(scoreValue > best)
                         UserDefault::getInstance()->setIntegerForKey("Best", scoreValue);
                     loadMainMenu();
-                   // loadGameEndedScreen();
-                    //int bestScore = UserDefault::getInstance()->getIntegerForKey("Best", 0);
+                 
                     break;
                 }
-            //}
+         
             
         }
     }
@@ -612,7 +612,6 @@ bool GameWorld::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event)
 
 void GameWorld::releaseResources()
 {
-    //long count =shapeList.size();
     for(auto iterator=shapeList.cbegin();iterator != shapeList.cend();iterator++)
     {
         Shape shape = iterator->second;
@@ -651,10 +650,20 @@ void GameWorld::releaseResources()
         playButton = NULL;
     }
     
+    if(soundButton !=NULL)
+    {
+        soundButton->removeFromParent();
+        soundButton = NULL;
+    }
+    
+    if(mainMenu !=NULL)
+    {
+        mainMenu->removeFromParent();
+        mainMenu = NULL;
+    }
     this->unscheduleAllCallbacks();
-    //if(Director::getInstance()->getTextureCache() !=NULL)
     Director::getInstance()->getTextureCache()->removeUnusedTextures();
-    //loadGame();
+ 
     
 }
 
@@ -664,5 +673,37 @@ void GameWorld::onKeyReleased(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::
     {
        if(isMainMenuScreen)
         Director::getInstance()->end();
+    }
+}
+
+void GameWorld::onSoundButtonClick(cocos2d::Ref *ref)
+{
+    if(soundButton->getTag() == 1)
+    {
+        soundButton->setColor(Color3B::GRAY);
+        soundButton->setTag(0);
+        UserDefault::getInstance()->setBoolForKey("SoundOn", false);
+    }
+    else
+    {
+        soundButton->setColor(Color3B::WHITE);
+        soundButton->setTag(1);
+        UserDefault::getInstance()->setBoolForKey("SoundOn", true);
+    }
+}
+
+void GameWorld::onMusicButtonClick(cocos2d::Ref *ref)
+{
+    if(musicButton->getTag() == 1)
+    {
+        musicButton->setColor(Color3B::GRAY);
+        musicButton->setTag(0);
+        UserDefault::getInstance()->setBoolForKey("MusicOn", false);
+    }
+    else
+    {
+        musicButton->setColor(Color3B::WHITE);
+        musicButton->setTag(1);
+        UserDefault::getInstance()->setBoolForKey("MusicOn", true);
     }
 }
