@@ -75,7 +75,14 @@ bool AppDelegate::applicationDidFinishLaunching() {
     register_all_packages();
     
     sdkbox::PluginAdColony::init();
-  //  sdkbox::PluginReview::init();
+    sdkbox::PluginFacebook::init();
+    
+    sdkbox::PluginReview::setTitle("custom title");
+    sdkbox::PluginReview::setMessage("custom message");
+    sdkbox::PluginReview::setCancelButtonTitle("custom cancel");
+    sdkbox::PluginReview::setRateButtonTitle("custom rate");
+    sdkbox::PluginReview::setRateLaterButtonTitle("custom rate later");
+    sdkbox::PluginReview::init();
 
     // create a scene. it's an autorelease object
     auto scene = GameWorld::createScene();

@@ -1,5 +1,22 @@
 {
     "android": {
+        "Share": {
+            "platforms": {
+                "SMS": {}, 
+                "Twitter": {
+                    "params": {
+                        "secret": "nlmUdPNcFGLWhyLu9cD794EDuDrVQnjd0YjTpB6sX8oHIQRrne", 
+                        "key": "EuovpLL0UhSGB7Jv5eKFJNMqO"
+                    }
+                }, 
+                "Facebook": {
+		 	"debug":true,
+    			"app_id":"642055879283064",
+    	         	"url_scheme_suffix”:”fb120905176scheme”
+		}, 
+                "EMail": {}
+            }
+        }, 
         "Review": {
             "LaunchLimit": 3, 
             "DayForReminding": 1, 
@@ -7,6 +24,9 @@
             "DayLimit": 0, 
             "LaunchForReminding": 2, 
             "UserEventLimit": 0
+        }, 
+        "Facebook": {
+            "debug": false
         }, 
         "AdColony": {
             "debug": true, 
@@ -26,6 +46,23 @@
         }
     }, 
     "ios": {
+        "Share": {
+            "platforms": {
+                "SMS": {}, 
+                "Twitter": {
+                    "params": {
+                        "secret": "haVcKarM96Sr4390XLQoHjyRUSyuHdkMX6letcc38h8TOWyiR9", 
+                        "key": "BUJTV6NEM7BAhhm82B12VbKGy"
+                    }
+                }, 
+                "Facebook": {
+			"debug":true,
+    			"app_id":"642055879283064",
+    			"url_scheme_suffix":"fb120905176scheme"
+		  }, 
+                "EMail": {}
+            }
+        }, 
         "Review": {
             "LaunchLimit": 3, 
             "DayForReminding": 1, 
@@ -34,6 +71,9 @@
             "DayLimit": 0, 
             "LaunchForReminding": 2, 
             "UserEventLimit": 0
+        }, 
+        "Facebook": {
+            "debug": true
         }, 
         "AdColony": {
             "debug": true, 

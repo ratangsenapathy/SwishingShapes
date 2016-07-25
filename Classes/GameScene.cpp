@@ -39,6 +39,7 @@ bool GameWorld::init()                          //initialize the game
     playField->drawSolidRect(Vec2(origin.x+WALL_WIDTH,origin.y+WALL_WIDTH), Vec2(screenEndX-WALL_WIDTH,screenEndY-WALL_WIDTH), Color4F::WHITE);//Color4F(247.0/255.0,196.0/255.0,81/255.0, 1) // Setting the dimensions of the play field
     this->addChild(playField);
     
+   // sdkbox::PluginFacebook::login();
     
     loadMainMenu();
     return true;
@@ -46,7 +47,7 @@ bool GameWorld::init()                          //initialize the game
 
 void GameWorld::loadMainMenu()             //This will load the main menu as the game screen and main menu hass common areas
 {
-    
+
     isMainMenuScreen = true;
     auto keypadListener = EventListenerKeyboard::create();
     keypadListener->onKeyPressed = CC_CALLBACK_2(GameWorld::onKeyPressed, this);
@@ -74,18 +75,24 @@ void GameWorld::loadMainMenu()             //This will load the main menu as the
     
 
     bool soundStatus = UserDefault::getInstance()->getBoolForKey("SoundOn", true);
-       soundButton = addToggleButton("res/soundButton.png", soundButton, soundStatus, Vec2(screenCentreX,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onSoundButtonClick, this));
+       soundButton = addToggleButton("res/soundButton.png", soundButton, soundStatus, Vec2(screenCentreX-4*WALL_WIDTH,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onSoundButtonClick, this));
     
     
     bool musicStatus = UserDefault::getInstance()->getBoolForKey("MusicOn", true);
-    musicButton = addToggleButton("res/musicButton.png", musicButton, musicStatus, Vec2(screenCentreX- 3*WALL_WIDTH,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onMusicButtonClick, this));
+    musicButton = addToggleButton("res/musicButton.png", musicButton, musicStatus, Vec2(screenCentreX- 2*WALL_WIDTH,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onMusicButtonClick, this));
     
-    if(musicButton)
+    if(musicStatus)
     {
         CocosDenshion::SimpleAudioEngine::getInstance()->playBackgroundMusic("audio/gameMusic.mp3",true);
     }
     
-    mainMenu = Menu::create(playButton,soundButton,musicButton,NULL);
+    ratingsButton = addToggleButton("res/ratingsButton.png", ratingsButton, true, Vec2(screenCentreX ,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onRatingsButtonClick, this));
+    
+    facebookButton = addToggleButton("res/facebookButton.png", facebookButton, true, Vec2(screenCentreX +2*WALL_WIDTH,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onFacebookButtonClick, this));
+    
+    twitterButton = addToggleButton("res/twitterButton.png",twitterButton, true, Vec2(screenCentreX +4*WALL_WIDTH,screenCentreY - 6*WALL_WIDTH), CC_CALLBACK_1(GameWorld::onTwitterButtonClick, this));
+    
+    mainMenu = Menu::create(playButton,soundButton,musicButton,ratingsButton,facebookButton,twitterButton,NULL);
     mainMenu->setPosition(Point::ZERO);
     
     int best = UserDefault::getInstance()->getIntegerForKey("Best", 0);
@@ -118,7 +125,7 @@ cocos2d::MenuItemToggle* GameWorld::addToggleButton(std::string buttonName,cocos
         toggleButton->setTag(1);
     }
     
-    toggleButton->setScale(visibleSize.width/toggleButton->getContentSize().width/7.0);
+    toggleButton->setScale(visibleSize.width/toggleButton->getContentSize().width/9.0);
     toggleButton->setPosition(position);
     toggleButton->setTag(1);
     toggleButton->setCallback(callback);
@@ -682,6 +689,16 @@ void GameWorld::onSoundButtonClick(cocos2d::Ref *ref)
 
 void GameWorld::onMusicButtonClick(cocos2d::Ref *ref)
 {
+    /*sdkbox::PluginFacebook::login();
+    sdkbox::PluginFacebook::requestReadPermissions({sdkbox::FB_PERM_READ_PUBLIC_PROFILE, sdkbox::FB_PERM_READ_USER_FRIENDS});
+    sdkbox::FBShareInfo info;
+    info.type  = sdkbox::FB_LINK;
+    info.link  = "http://www.cocos2d-x.org";
+    info.title = "cocos2d-x";
+    info.text  = "Best Game Engine";
+    info.image = "http://cocos2d-x.org/images/logo.png";
+    sdkbox::PluginFacebook::share(info);
+    return;*/
     if(musicButton->getTag() == 1)
     {
         musicButton->setColor(Color3B::GRAY);
@@ -696,4 +713,19 @@ void GameWorld::onMusicButtonClick(cocos2d::Ref *ref)
         UserDefault::getInstance()->setBoolForKey("MusicOn", true);
         CocosDenshion::SimpleAudioEngine::getInstance()->playBackgroundMusic("audio/gameMusic.mp3",true);
     }
+}
+
+void GameWorld::onRatingsButtonClick(cocos2d::Ref *ref)
+{
+   sdkbox::PluginReview::show();
+}
+
+void GameWorld::onFacebookButtonClick(cocos2d::Ref *ref)
+{
+    
+}
+
+void GameWorld::onTwitterButtonClick(cocos2d::Ref *ref)
+{
+    
 }
