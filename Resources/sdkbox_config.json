@@ -11,8 +11,8 @@
                 }, 
                 "Facebook": {
 		 	"debug":true,
-    			"app_id":"642055879283064",
-    	         	"url_scheme_suffix”:”fb120905176scheme”
+    			"app_id":"496871160518821",
+    	         	"url_scheme_suffix" : ""
 		}, 
                 "EMail": {}
             }
@@ -57,8 +57,8 @@
                 }, 
                 "Facebook": {
 			"debug":true,
-    			"app_id":"642055879283064",
-    			"url_scheme_suffix":"fb120905176scheme"
+    			"app_id":"496871160518821",
+    			“url_scheme_suffix":""
 		  }, 
                 "EMail": {}
             }

@@ -148,8 +148,8 @@ void GameWorld::loadGame()
     
     isMainMenuScreen = false;
     sdkbox::PluginAdColony::show("video");
-    while(sdkbox::PluginAdColony::videoAdCurrentlyRunning());
-    CCLOG("Lol Nice");
+    //while(sdkbox::PluginAdColony::videoAdCurrentlyRunning());
+    //CCLOG("Lol Nice");
     score = Label::createWithTTF("0", "fonts/MarkerFelt2.ttf", visibleSize.width/20.0f);
     score->setPosition(Vec2(screenCentreX,screenEndY - (WALL_WIDTH/2.0)));
     this->addChild(score);
@@ -722,7 +722,16 @@ void GameWorld::onRatingsButtonClick(cocos2d::Ref *ref)
 
 void GameWorld::onFacebookButtonClick(cocos2d::Ref *ref)
 {
+    if(!sdkbox::PluginFacebook::isLoggedIn())
+        sdkbox::PluginFacebook::login();
     
+    sdkbox::FBShareInfo info;
+    info.type  = sdkbox::FB_LINK;
+    info.link  = "http://www.cocos2d-x.org";
+    info.title = "cocos2d-x";
+    info.text  = "Best Game Engine";
+    info.image = "http://cocos2d-x.org/images/logo.png";
+    sdkbox::PluginFacebook::dialog(info);
 }
 
 void GameWorld::onTwitterButtonClick(cocos2d::Ref *ref)
