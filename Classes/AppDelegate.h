@@ -4,7 +4,7 @@
 #include "PluginReview/PluginReview.h"
 #include "PluginFacebook/PluginFacebook.h"
 #include "cocos2d.h"
-
+#include "PluginShare/PluginShare.h"
 /**
 @brief    The cocos2d Application.
 

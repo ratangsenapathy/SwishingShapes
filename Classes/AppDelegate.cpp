@@ -76,6 +76,8 @@ bool AppDelegate::applicationDidFinishLaunching() {
     
     sdkbox::PluginAdColony::init();
     sdkbox::PluginFacebook::init();
+    sdkbox::PluginShare::init();
+    
     
     sdkbox::PluginReview::setTitle("custom title");
     sdkbox::PluginReview::setMessage("custom message");
